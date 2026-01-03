@@ -10,6 +10,9 @@ public class PlayerMovement : MonoBehaviour
     Animator animator;
     Vector2 movement;
 
+    // Store last non-zero direction
+    Vector2 lastDirection = Vector2.down;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -18,27 +21,34 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        // Input (Update is correct for input)
-        movement.x = Input.GetAxisRaw("Horizontal");
-        movement.y = Input.GetAxisRaw("Vertical");
+        // Raw input
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
 
-        // Normalize to avoid faster diagonals
-        movement = movement.normalized;
+        movement = new Vector2(x, y).normalized;
 
-        // Animation
         bool isMoving = movement != Vector2.zero;
         animator.SetBool("IsMoving", isMoving);
 
         if (isMoving)
         {
-            animator.SetFloat("MoveX", movement.x);
-            animator.SetFloat("MoveY", movement.y);
+            // Choose dominant axis
+            if (Mathf.Abs(x) > Mathf.Abs(y))
+            {
+                lastDirection = new Vector2(Mathf.Sign(x), 0);
+            }
+            else
+            {
+                lastDirection = new Vector2(0, Mathf.Sign(y));
+            }
+
+            animator.SetFloat("MoveX", lastDirection.x);
+            animator.SetFloat("MoveY", lastDirection.y);
         }
     }
 
     void FixedUpdate()
     {
-        // Rigidbody movement (FixedUpdate is correct for physics)
         rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
     }
 }
